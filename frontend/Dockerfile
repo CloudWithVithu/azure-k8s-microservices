@@ -1,17 +1,17 @@
-# Use official Node image
 FROM node:18
 
-# Set working directory
 WORKDIR /app
 
-# Copy code
-COPY . .
+# Copy package.json and package-lock.json first
+COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Expose frontend port
+# Copy the rest of the app code
+COPY . .
+
 EXPOSE 3000
 
-# Start the app
 CMD ["npm", "start"]
+

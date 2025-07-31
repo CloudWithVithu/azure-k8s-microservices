@@ -18,13 +18,17 @@ if collection.count_documents({}) == 0:
     ])
 
 @app.route('/api/data')
-def home():
+def api_data():
     return jsonify({"message": "Hello from Backend API with MongoDB!"})
 
 @app.route('/api/users')
 def users():
     user_list = list(collection.find({}, {"_id": 0}))  # Remove Mongo ObjectId
     return jsonify(user_list)
+
+@app.route('/')
+def home():
+    return "Backend is running"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
