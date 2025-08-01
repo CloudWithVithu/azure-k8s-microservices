@@ -34,5 +34,6 @@ app.listen(PORT, () => {
   console.log(`Frontend running on port ${PORT}`);
 });
 
+console.log("CI/CD test deploy v6");
 
 
