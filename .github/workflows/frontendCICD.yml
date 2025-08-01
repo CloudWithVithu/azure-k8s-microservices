@@ -1,0 +1,50 @@
+name: Frontend CI/CD to AKS
+
+on:
+  push:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontendCICD.yml'
+      - 'k8s-manifests/frontend-deployment.yaml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      AZURE_CONTAINER_REGISTRY: acrk8svithu.azurecr.io
+      IMAGE_NAME: frontend-app
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Docker Login to ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: acrk8svithu.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build Docker Image
+        run: |
+          docker build -t $AZURE_CONTAINER_REGISTRY/$IMAGE_NAME:${{ github.sha }} ./frontend
+
+      - name: Push Docker Image to ACR
+        run: |
+          docker push $AZURE_CONTAINER_REGISTRY/$IMAGE_NAME:${{ github.sha }}
+
+      - name: Get AKS credentials
+        run: az aks get-credentials --resource-group ${{ secrets.AKS_RESOURCE_GROUP }} --name ${{ secrets.AKS_CLUSTER_NAME }}
+
+      - name: Deploy Frontend to AKS
+        run: |
+          kubectl set image deployment/frontend-deployment frontend=$AZURE_CONTAINER_REGISTRY/$IMAGE_NAME:${{ github.sha }}
+
+      - name: Verify rollout status
+        run: kubectl rollout status deployment/frontend-deployment
